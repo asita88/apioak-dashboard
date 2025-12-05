@@ -1,7 +1,6 @@
 import request from '@/utils/requestAxios'
 
 const login = '/admin/user/login'
-const register = '/admin/user/register'
 const logout = '/admin/user/logout'
 
 /**
@@ -11,19 +10,6 @@ const logout = '/admin/user/logout'
 export const $login = data => {
   return request.request({
     url: login,
-    method: 'POST',
-    data: data
-  })
-}
-
-/**
- * 注册
- * @param {*} data
- * @returns
- */
-export const $register = data => {
-  return request.request({
-    url: register,
     method: 'POST',
     data: data
   })

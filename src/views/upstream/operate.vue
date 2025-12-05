@@ -28,56 +28,99 @@
         name="upstream_nodes"
         :rules="schemaUpstream.upstream_nodes"
       >
-        <a-space
+        <div
           v-for="(item, index) in data.formData.upstream_nodes"
           :key="item.id"
-          style="display: flex; margin-bottom: 0px"
-          align="baseline"
+          style="margin-bottom: 16px; padding: 12px; border: 1px solid #e8e8e8; border-radius: 4px;"
         >
-          <a-form-item
-            class="upstream_nodes_item"
-            :name="['upstream_nodes', index, 'node_ip']"
-            :rules="schemaUpstream.node_ip"
-          >
+          <a-space style="display: flex; margin-bottom: 8px" align="baseline">
+            <a-form-item
+              class="upstream_nodes_item"
+              :name="['upstream_nodes', index, 'node_ip']"
+              :rules="schemaUpstream.node_ip"
+            >
+              <a-input
+                placeholder="IPV4"
+                v-model:value="data.formData.upstream_nodes[index].node_ip"
+              />
+            </a-form-item>
+
+            <a-form-item
+              class="upstream_nodes_item"
+              :name="['upstream_nodes', index, 'node_port']"
+              :rules="schemaUpstream.node_port"
+            >
+              <a-input-number
+                placeholder="Port"
+                v-model:value="data.formData.upstream_nodes[index].node_port"
+              />
+            </a-form-item>
+
+            <a-form-item
+              class="upstream_nodes_item"
+              :name="['upstream_nodes', index, 'node_weight']"
+              :rules="schemaUpstream.node_weight"
+            >
+              <a-input-number
+                placeholder="Weight"
+                v-model:value="data.formData.upstream_nodes[index].node_weight"
+              />
+            </a-form-item>
+
+            <a-form-item class="upstream_nodes_item">
+              <a-button type="link" size="small" @click="fn.editTags(item, index)" title="编辑标签">
+                标签
+              </a-button>
+
+              <a v-if="index > 0" @click="fn.removeIP(item)">
+                <i class="iconfont color-red icon-jian"></i>
+              </a>
+            </a-form-item>
+          </a-space>
+          <div v-if="item.tags && Object.keys(item.tags).length > 0" style="margin-top: 8px;">
+            <span style="margin-right: 8px; color: #666; font-size: 12px;">标签：</span>
+            <a-tag
+              v-for="(value, key) in item.tags"
+              :key="key"
+              color="blue"
+              style="margin-right: 8px; margin-bottom: 4px;"
+            >
+              {{ key }}: {{ value }}
+            </a-tag>
+          </div>
+        </div>
+        <a-button type="dashed" @click="fn.addIP()" style="width: 100%; margin-top: 8px;">
+          <i class="iconfont icon-tianjia"></i> 添加节点
+        </a-button>
+      </a-form-item>
+
+      <a-modal
+        v-model:visible="data.tagModalVisible"
+        title="编辑标签"
+        @ok="fn.saveTags"
+        @cancel="fn.cancelTags"
+      >
+        <div v-for="(tag, tagIndex) in data.currentTagList" :key="tagIndex" style="margin-bottom: 12px">
+          <a-space style="width: 100%">
             <a-input
-              placeholder="IPV4"
-              v-model:value="data.formData.upstream_nodes[index].node_ip"
+              v-model:value="tag.key"
+              placeholder="标签键"
+              style="width: 200px"
             />
-          </a-form-item>
-
-          <a-form-item
-            class="upstream_nodes_item"
-            :name="['upstream_nodes', index, 'node_port']"
-            :rules="schemaUpstream.node_port"
-          >
-            <a-input-number
-              placeholder="Port"
-              v-model:value="data.formData.upstream_nodes[index].node_port"
+            <a-input
+              v-model:value="tag.value"
+              placeholder="标签值"
+              style="width: 200px"
             />
-          </a-form-item>
-
-          <a-form-item
-            class="upstream_nodes_item"
-            :name="['upstream_nodes', index, 'node_weight']"
-            :rules="schemaUpstream.node_weight"
-          >
-            <a-input-number
-              placeholder="Weight"
-              v-model:value="data.formData.upstream_nodes[index].node_weight"
-            />
-          </a-form-item>
-
-          <a-form-item class="upstream_nodes_item">
-            <a @click="fn.addIP()">
-              <i class="iconfont icon-tianjia"></i>
-            </a>
-
-            <a v-if="index > 0" @click="fn.removeIP(item)">
+            <a @click="fn.removeTag(tagIndex)">
               <i class="iconfont color-red icon-jian"></i>
             </a>
-          </a-form-item>
-        </a-space>
-      </a-form-item>
+          </a-space>
+        </div>
+        <a-button type="dashed" @click="fn.addTag" style="width: 100%">
+          <i class="iconfont icon-tianjia"></i> 添加标签
+        </a-button>
+      </a-modal>
 
       <a-divider orientation="left">健康检测</a-divider>
 
@@ -170,109 +213,6 @@
           </div>
         </a-form-item>
 
-        <a-divider style="margin: 16px 0" />
-
-        <div v-if="!data.formData.checkTcp">
-          <a-form-item 
-            label="健康状态码：" 
-            style="margin-bottom: 16px"
-          >
-            <a-select
-              v-model:value="data.formData.healthyHttpStatuses"
-              mode="tags"
-              placeholder="输入状态码后按回车，如：200, 302"
-              style="width: 100%"
-              :token-separators="[',']"
-            >
-            </a-select>
-            <div style="color: #999; font-size: 12px; margin-top: 6px; line-height: 1.5">
-              哪些HTTP状态码表示健康，多个用逗号分隔，默认：200, 302
-            </div>
-          </a-form-item>
-
-          <a-form-item 
-            label="不健康状态码：" 
-            style="margin-bottom: 16px"
-          >
-            <a-select
-              v-model:value="data.formData.unhealthyHttpStatuses"
-              mode="tags"
-              placeholder="输入状态码后按回车，如：429, 404, 500, 502, 503"
-              style="width: 100%"
-              :token-separators="[',']"
-            >
-            </a-select>
-            <div style="color: #999; font-size: 12px; margin-top: 6px; line-height: 1.5">
-              哪些HTTP状态码表示不健康，多个用逗号分隔，默认：429, 404, 500, 501, 502, 503, 504, 505
-            </div>
-          </a-form-item>
-        </div>
-
-        <a-form-item 
-          label="健康成功次数：" 
-          style="margin-bottom: 16px"
-        >
-          <a-input-number
-            v-model:value="data.formData.healthySuccesses"
-            :min="1"
-            :max="254"
-            placeholder="2"
-            style="width: 100%"
-          />
-          <div style="color: #999; font-size: 12px; margin-top: 6px; line-height: 1.5">
-            连续成功多少次才标记为健康，1-254，默认：2
-          </div>
-        </a-form-item>
-
-        <div v-if="!data.formData.checkTcp">
-          <a-form-item 
-            label="HTTP失败次数：" 
-            style="margin-bottom: 16px"
-          >
-            <a-input-number
-              v-model:value="data.formData.unhealthyHttpFailures"
-              :min="1"
-              :max="254"
-              placeholder="3"
-              style="width: 100%"
-            />
-            <div style="color: #999; font-size: 12px; margin-top: 6px; line-height: 1.5">
-              连续HTTP失败多少次才标记为不健康，1-254，默认：3
-            </div>
-          </a-form-item>
-        </div>
-
-        <a-form-item 
-          label="TCP失败次数：" 
-          style="margin-bottom: 16px"
-        >
-          <a-input-number
-            v-model:value="data.formData.unhealthyTcpFailures"
-            :min="1"
-            :max="254"
-            placeholder="3"
-            style="width: 100%"
-          />
-          <div style="color: #999; font-size: 12px; margin-top: 6px; line-height: 1.5">
-            连续TCP失败多少次才标记为不健康，1-254，默认：3
-          </div>
-        </a-form-item>
-
-        <a-form-item 
-          label="超时失败次数：" 
-          style="margin-bottom: 16px"
-        >
-          <a-input-number
-            v-model:value="data.formData.unhealthyTimeouts"
-            :min="1"
-            :max="254"
-            placeholder="3"
-            style="width: 100%"
-          />
-          <div style="color: #999; font-size: 12px; margin-top: 6px; line-height: 1.5">
-            连续超时多少次才标记为不健康，1-254，默认：3
-          </div>
-        </a-form-item>
       </div>
 
       <a-form-item label="连接超时：" name="connect_timeout">
@@ -323,7 +263,8 @@ export default {
       id: 0,
       node_ip: null,
       node_port: null,
-      node_weight: null
+      node_weight: null,
+      tags: {}
     }
 
     // 定义变量
@@ -342,14 +283,11 @@ export default {
         checkHost: '',
         checkUri: '/',
         checkInterval: 1,
-        checkTimeout: 1,
-        healthyHttpStatuses: ['200', '302'],
-        healthySuccesses: 2,
-        unhealthyHttpStatuses: ['429', '404', '500', '501', '502', '503', '504', '505'],
-        unhealthyHttpFailures: 3,
-        unhealthyTcpFailures: 3,
-        unhealthyTimeouts: 3
-      }
+        checkTimeout: 1
+      },
+      tagModalVisible: false,
+      currentTagIndex: -1,
+      currentTagList: []
     })
 
     // 获取详情
@@ -368,7 +306,7 @@ export default {
         data.formData.write_timeout = dataInfo.write_timeout
         data.formData.read_timeout = dataInfo.read_timeout
 
-        if (dataInfo.node_list.length > 0) {
+        if (dataInfo.node_list && dataInfo.node_list.length > 0) {
           data.formData.upstream_nodes = []
 
           dataInfo.node_list.forEach((item, index) => {
@@ -377,39 +315,21 @@ export default {
             nodesInfo.node_ip = item.node_ip
             nodesInfo.node_port = item.node_port
             nodesInfo.node_weight = item.node_weight
+            nodesInfo.tags = item.tags || {}
             data.formData.upstream_nodes.push(nodesInfo)
           })
+        }
 
-          // 从第一个节点读取健康检测配置（所有节点共享相同的健康检测配置）
-          if (dataInfo.node_list.length > 0 && dataInfo.node_list[0].check) {
-            const firstCheck = dataInfo.node_list[0].check
-            data.formData.checkEnabled = firstCheck.enabled || false
-            data.formData.checkTcp = firstCheck.tcp !== undefined ? firstCheck.tcp : true
-            data.formData.checkMethod = firstCheck.method || ''
-            data.formData.checkHost = firstCheck.host || ''
-            data.formData.checkUri = firstCheck.uri || '/'
-            data.formData.checkInterval = firstCheck.interval || 1
-            data.formData.checkTimeout = firstCheck.timeout || 1
-            
-            // 读取健康检测状态码和次数配置
-            if (firstCheck.healthy_http_statuses && Array.isArray(firstCheck.healthy_http_statuses)) {
-              data.formData.healthyHttpStatuses = firstCheck.healthy_http_statuses.map(s => String(s))
-            } else {
-              data.formData.healthyHttpStatuses = ['200', '302']
-            }
-            
-            data.formData.healthySuccesses = firstCheck.healthy_successes || 2
-            
-            if (firstCheck.unhealthy_http_statuses && Array.isArray(firstCheck.unhealthy_http_statuses)) {
-              data.formData.unhealthyHttpStatuses = firstCheck.unhealthy_http_statuses.map(s => String(s))
-            } else {
-              data.formData.unhealthyHttpStatuses = ['429', '404', '500', '501', '502', '503', '504', '505']
-            }
-            
-            data.formData.unhealthyHttpFailures = firstCheck.unhealthy_http_failures || 3
-            data.formData.unhealthyTcpFailures = firstCheck.unhealthy_tcp_failures || 3
-            data.formData.unhealthyTimeouts = firstCheck.unhealthy_timeouts || 3
-          }
+        // 从 upstream 级别读取健康检测配置
+        if (dataInfo.check) {
+          const check = dataInfo.check
+          data.formData.checkEnabled = check.enabled || false
+          data.formData.checkTcp = check.tcp !== undefined ? check.tcp : true
+          data.formData.checkMethod = check.method || ''
+          data.formData.checkHost = check.host || ''
+          data.formData.checkUri = check.uri || '/'
+          data.formData.checkInterval = check.interval || 1
+          data.formData.checkTimeout = check.timeout || 1
         }
       }
     }
@@ -420,8 +340,56 @@ export default {
         id: data.formData.upstream_nodes.length,
         node_ip: null,
         node_port: null,
-        node_weight: null
+        node_weight: null,
+        tags: {}
       })
+    }
+
+    // 编辑标签
+    const editTags = (item, index) => {
+      data.currentTagIndex = index
+      const tags = item.tags || {}
+      data.currentTagList = Object.keys(tags).map(key => ({
+        key: key,
+        value: tags[key]
+      }))
+      if (data.currentTagList.length === 0) {
+        data.currentTagList.push({ key: '', value: '' })
+      }
+      data.tagModalVisible = true
+    }
+
+    // 添加标签
+    const addTag = () => {
+      data.currentTagList.push({ key: '', value: '' })
+    }
+
+    // 删除标签
+    const removeTag = (index) => {
+      data.currentTagList.splice(index, 1)
+    }
+
+    // 保存标签
+    const saveTags = () => {
+      const tags = {}
+      for (let i = 0; i < data.currentTagList.length; i++) {
+        const key = data.currentTagList[i].key?.trim()
+        const value = data.currentTagList[i].value?.trim()
+        if (key && value) {
+          tags[key] = value
+        }
+      }
+      if (data.currentTagIndex >= 0) {
+        data.formData.upstream_nodes[data.currentTagIndex].tags = tags
+      }
+      data.tagModalVisible = false
+    }
+
+    // 取消编辑标签
+    const cancelTags = () => {
+      data.tagModalVisible = false
+      data.currentTagIndex = -1
+      data.currentTagList = []
     }
 
     // 健康检测开关变化
@@ -434,12 +402,6 @@ export default {
         data.formData.checkUri = '/'
         data.formData.checkInterval = 1
         data.formData.checkTimeout = 1
-        data.formData.healthyHttpStatuses = ['200', '302']
-        data.formData.healthySuccesses = 2
-        data.formData.unhealthyHttpStatuses = ['429', '404', '500', '501', '502', '503', '504', '505']
-        data.formData.unhealthyHttpFailures = 3
-        data.formData.unhealthyTcpFailures = 3
-        data.formData.unhealthyTimeouts = 3
       }
     }
 
@@ -460,60 +422,51 @@ export default {
       formData.read_timeout = parseInt(formData.read_timeout)
       formData.enable = formData.enable == true ? 1 : 2
 
-      // 处理健康检测配置（应用到所有节点）
-      if (formData.upstream_nodes && formData.upstream_nodes.length > 0) {
-        let checkConfig
-        if (formData.checkEnabled) {
-          checkConfig = {
-            enabled: true,
-            tcp: formData.checkTcp,
-            method: formData.checkMethod || '',
-            host: formData.checkHost || '',
-            uri: formData.checkUri || '/',
-            interval: formData.checkInterval || 1,
-            timeout: formData.checkTimeout || 1,
-            healthy_successes: formData.healthySuccesses || 2,
-            unhealthy_http_failures: formData.unhealthyHttpFailures || 3,
-            unhealthy_tcp_failures: formData.unhealthyTcpFailures || 3,
-            unhealthy_timeouts: formData.unhealthyTimeouts || 3
-          }
-          
-          // 处理HTTP状态码（转换为数字数组）
-          if (!formData.checkTcp) {
-            if (formData.healthyHttpStatuses && formData.healthyHttpStatuses.length > 0) {
-              checkConfig.healthy_http_statuses = formData.healthyHttpStatuses.map(s => parseInt(s)).filter(s => !isNaN(s) && s >= 100 && s <= 599)
-            } else {
-              checkConfig.healthy_http_statuses = [200, 302]
-            }
-            
-            if (formData.unhealthyHttpStatuses && formData.unhealthyHttpStatuses.length > 0) {
-              checkConfig.unhealthy_http_statuses = formData.unhealthyHttpStatuses.map(s => parseInt(s)).filter(s => !isNaN(s) && s >= 100 && s <= 599)
-            } else {
-              checkConfig.unhealthy_http_statuses = [429, 404, 500, 501, 502, 503, 504, 505]
-            }
-          }
-        } else {
-          checkConfig = {
-            enabled: false,
-            tcp: true,
-            method: '',
-            host: '',
-            uri: '/',
-            interval: 1,
-            timeout: 1,
-            healthy_successes: 2,
-            unhealthy_http_failures: 3,
-            unhealthy_tcp_failures: 3,
-            unhealthy_timeouts: 3
-          }
+      // 处理健康检测配置（放在 upstream 级别）
+      if (formData.checkEnabled) {
+        formData.check = {
+          enabled: true,
+          tcp: formData.checkTcp,
+          method: formData.checkMethod || '',
+          host: formData.checkHost || '',
+          uri: formData.checkUri || '/',
+          interval: formData.checkInterval || 1,
+          timeout: formData.checkTimeout || 1
         }
+      } else {
+        formData.check = {
+          enabled: false,
+          tcp: true,
+          method: '',
+          host: '',
+          uri: '/',
+          interval: 1,
+          timeout: 1
+        }
+      }
 
-        formData.upstream_nodes = formData.upstream_nodes.map(node => ({
-          node_ip: node.node_ip,
-          node_port: node.node_port,
-          node_weight: node.node_weight,
-          check: checkConfig
-        }))
+      // 移除临时字段
+      delete formData.checkEnabled
+      delete formData.checkTcp
+      delete formData.checkMethod
+      delete formData.checkHost
+      delete formData.checkUri
+      delete formData.checkInterval
+      delete formData.checkTimeout
+
+      // 处理节点数据，包含标签
+      if (formData.upstream_nodes && formData.upstream_nodes.length > 0) {
+        formData.upstream_nodes = formData.upstream_nodes.map(node => {
+          const nodeData = {
+            node_ip: node.node_ip,
+            node_port: node.node_port,
+            node_weight: node.node_weight
+          }
+          if (node.tags && Object.keys(node.tags).length > 0) {
+            nodeData.tags = node.tags
+          }
+          return nodeData
+        })
       }
 
       // 调用增加/修改接口
@@ -544,7 +497,12 @@ export default {
       removeIP,
       onSubmit,
       cancel,
-      onCheckEnabledChange
+      onCheckEnabledChange,
+      editTags,
+      addTag,
+      removeTag,
+      saveTags,
+      cancelTags
     })
 
     return {

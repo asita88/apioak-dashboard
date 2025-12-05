@@ -1,7 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Error404 from '@/layouts/error404'
 import Login from '@/views/user/login'
-import Register from '@/views/user/register'
 import Service from '@/views/services'
 import Router from '@/views/router'
 import Upstream from '@/views/upstream'
@@ -19,11 +18,6 @@ const routes = [
     path: '/login',
     name: 'login',
     component: Login
-  },
-  {
-    path: '/register',
-    name: 'register',
-    component: Register
   },
   {
     path: '/',
@@ -69,7 +63,7 @@ router.beforeEach(async (to, from, next) => {
     if (userInfo.token) {
       router.replace('/')
     }
-  } else if (to.path != '/login' && to.path != '/register') {
+  } else if (to.path != '/login') {
     if (!userInfo.token) {
       router.replace('/login')
     }

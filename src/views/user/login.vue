@@ -28,8 +28,6 @@
             <a-button type="primary" html-type="submit">登录</a-button>
           </a-form-item>
         </a-form>
-
-        <a-anchor-link style="margin-left: 130px" href="#register" title="暂无账号，去注册>" />
       </div>
     </div>
   </div>
